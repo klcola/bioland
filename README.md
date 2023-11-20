@@ -1,9 +1,4 @@
-# bioland
+# Bioland Linux -- 高性能计算集群操作系统最佳实践
 
-## TODO List
+Bioland Linux 是一个开源项目，目的是为大家提供一个逐步搭建高性能集群操作系统的说明。用户可以根据我们提供的操作规范从零搭建一套可靠的高性能集群操作系统，来方便的管理规模从数十台到数千台级别的高性能计算集群。
 
-1. customize grafana visualize panel
-2. build ubuntu apt repository mirror site
-3. 优化 slurm 计费程序
-4. create our own software apt repository for bioinformatics high performance computing
-5. 定制系统默认组件和默认启动脚本， 开发操作系统安装程序
