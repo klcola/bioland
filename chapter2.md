@@ -109,7 +109,7 @@ root@localhost:~# ls amd64/
 bootx64.efi  grub  grubx64.efi  initrd  ldlinux.c32  linux  pxelinux.0  pxelinux.cfg
 ```
 
-3) 将 amd64 移至 tftp 服务目录
+3）将 amd64 移至 tftp 服务目录
 ```
 mv amd64 /srv/tftp/amd64
 ```
