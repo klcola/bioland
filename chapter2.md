@@ -94,6 +94,43 @@ dhcp-boot=tag:efi-x86_64,bootx64.efi
 enable-tftp
 tftp-root=/srv/tftp
 ```
+### 3. 为远程网卡启动提供引导加载程序
+1）访问 [http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/](http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/)
+找到适合自己平台的 Netboot tarball 并下载，比如如果是 amd64 平台，可以下载
+[64-bit PC (AMD64) netboot tarball](http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/noble-netboot-amd64.tar.gz)
+
+2）解压缩
+```
+gzip -dc noble-netboot-amd64.tar.gz | tar xf -
+```
+运行完上述命令后会在当前目录下出现 amd64 目录，里面的内容大致如下
+```
+root@localhost:~# ls amd64/
+bootx64.efi  grub  grubx64.efi  initrd  ldlinux.c32  linux  pxelinux.0  pxelinux.cfg
+```
+3) 将 amd64 移至 tftp 服务目录
+```
+mv amd64 /srv/tftp/amd64
+```
+
+### 4. 修改主机 /etc/hosts 文件，加入计算节点的 ip 和主机名。dnsmasq 的 dns 服务器默认会读取 /etc/hosts 文件中的记录，这样计算节点启动后主机名就会根据 dns 的记录设置成相应的名字。
+
+/etc/hosts 文件内容如下
+```
+127.0.0.1 localhost
+128.2.6.101     c02b06n02a
+128.2.6.102     c02b06n02b
+128.2.6.103     c02b06n02c
+128.2.6.104     c02b06n02d
+128.2.6.105     c02b06n03a
+128.2.6.106     c02b06n03b
+128.2.6.107     c02b06n03c
+128.2.6.108     c02b06n03d
+128.2.6.109     910b
+128.1.7.105     c01b07n05
+128.1.7.106     c01b07n06
+128.1.7.107     c01b07n07
+```
 
 
 
