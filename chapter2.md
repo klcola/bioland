@@ -2,3 +2,100 @@
 
 ## 系统设计
 在 Bioland Linux 高性能集群操作系统的环境中，有两类节点，一类为操作系统分发节点，一类为集群的运行时节点。
+
+//todo 系统架构图
+
+## 操作系统分发节点安装及配置
+
+### 1. 安装操作系统
+给操作系统分发节点安装 Ubuntu 22.04 LTS server 版操作系统，具体的安装说明请参考 [Ubuntu Server 版基础安装文档](https://ubuntu.com/server/docs/installation)
+安装完成后，可以给 apt 设置国内的阿里云源或清华大学镜像源来加快软件安装速度，具体操作步骤
+
+```bash
+#!/bin/bash
+
+# 备份 source.list 文件
+cp /etc/apt/sources.list /etc/apt/sources.list-
+
+# 替换源地址
+sed -e 's/archive.ubuntu.com/mirrors.aliyun.com/' /etc/apt/sources.list- > /etc/apt/sources.list
+
+# 更新 apt 源缓存
+apt update
+```
+
+### 2. 安装配置 dhcp 和 tfpd 服务器
+1) 首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
+
+```bash
+#!/bin/bash
+# 安装 dnsmasq
+apt update && apt install dnsmasq
+```
+
+2) 配置 dnsmasq
+修改 dnsmasq 配置文件，创建 /etc/dnsmasq.conf.d/pxe.conf
+请注意根据实际情况修改 interface 及 mac 地址。并注意，IB卡的 mac 地址不能直接写```ip a``` 命令输出的 mac 地址，而是要用
+id:ff:00:00:00:00:00:02:00:00:02:c9:00: + mac地址后8位，例如如果 ip a 的输出结果的 ib 卡部分如下
+```
+6: ib0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 2044 qdisc mq state UP group default qlen 256
+    link/infiniband 00:00:07:9a:fe:80:00:00:00:00:00:00:3a:70:ed:a3:00:27:ff:19 brd 00:ff:ff:ff:ff:12:40:1b:ff:ff:00:00:00:00:00:00:ff:ff:ff:ff
+    altname ibp177s0
+    altname ibs21
+    inet 12.2.24.14/8 brd 12.255.255.255 scope global dynamic ib0
+       valid_lft 450sec preferred_lft 450sec
+    inet6 fe80::1270:fd03:17:cc80/64 scope link
+       valid_lft forever preferred_lft forever
+``` 
+则 ib 卡的 mac 地址应为
+```
+id:ff:00:00:00:00:00:02:00:00:02:c9:00:3a:70:ed:a3:00:27:ff:19
+```
+
+pxe.conf 文件的内容大致如下
+```txt
+interface=ens129f0,ib0,lo
+bind-interfaces
+dhcp-range=ens129f0,128.1.0.0,128.255.0.0
+dhcp-range=ib0,12.1.0.0,12.255.0.0
+
+dhcp-host=61:51:2F:1E:1F:30,128.2.6.101
+dhcp-host=61:61:2F:1D:1B:40,128.2.6.103
+dhcp-host=61:61:2F:1D:1A:6C,128.2.6.104
+dhcp-host=61:61:2F:1D:16:94,128.2.6.105
+dhcp-host=61:61:2F:17:F1:E8,128.2.6.106
+dhcp-host=61:61:2F:17:F4:6C,128.2.6.107
+dhcp-host=61:61:2F:12:FC:D0,128.2.6.108
+dhcp-host=61:4F:A6:1E:BF:B0,128.2.6.109
+dhcp-host=61:61:2F:17:fa:9D,128.2.24.13
+dhcp-host=70:61:2F:17:f4:C4,128.2.24.14
+dhcp-host=70:94:49:32:E5:96,128.1.7.105
+dhcp-host=70:16:3A:1E:2C:14,128.1.7.106
+dhcp-host=70:94:49:02:E7:2A,128.1.7.107
+
+
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:08:c0:eb:03:00:39:a4:04,12.2.6.101
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:08:cd:eb:03:00:78:a3:a4,12.2.6.102
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:10:7e:fd:03:00:1a:cc:98,12.2.6.103
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:10:7e:fd:03:00:1b:cc:90,12.2.6.104
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:10:7e:fd:03:00:1c:cc:80,12.2.6.105
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:34:a8:e8:61:1c:35:83:76,12.1.6.106
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:34:a8:e8:61:1c:37:83:78,12.1.6.107
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:35:83:71,12.1.6.108
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:3a:b6:91,12.1.6.109
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:3a:b6:92,12.1.7.105
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:35:8b:93,12.1.7.106
+dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:35:8b:94,12.1.7.107
+
+
+dhcp-boot=pxelinux.0
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-boot=tag:efi-x86_64,bootx64.efi
+enable-tftp
+tftp-root=/srv/tftp
+```
+
+
+
+
+
