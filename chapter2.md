@@ -24,6 +24,20 @@ sed -e 's/archive.ubuntu.com/mirrors.aliyun.com/' /etc/apt/sources.list- > /etc/
 apt update
 ```
 
+安装 Infiniband 适配卡驱动，从 [https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/](https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/) 下载最新的驱动版本。
+编译 Infiniband 适配卡驱动需要先装一些必要的软件包（下面的列表仅供参考，很可能会根据版本的更新有所变化，可以编译出错时根据提示安装必要的软件包）。
+```bash
+# 安装必须的软件包
+apt update
+apt install net-tools libpython3-dev libfile-find-rule-perl-perl libgfortran5 libnl-route-3-200 libnl-3-200 debhelper lsof libfuse2 autotools-dev gcc make libpci3 libnuma1 gfortran automake pkg-config libnl-3-dev tcl flex libnl-route-3-dev quilt libusb-1.0-0 libltdl-dev swig chrpath dpatch dkms ethtool tk graphviz bison autoconf python3-distutils pciutils m4
+
+# 解压并编译驱动
+gzip -dc MLNX_OFED_LINUX-23.10-0.5.5.0-ubuntu22.04-x86_64.tgz | tar xf -
+cd MLNX_OFED_LINUX-23.10-0.5.5.0-ubuntu22.04-x86_64/
+```
+
+
+
 ### 2. 安装配置 dhcp 和 tfpd 服务器
 1) 首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
 
@@ -99,6 +113,9 @@ dhcp-boot=tag:efi-arm64,arm64/bootaa64.efi
 
 enable-tftp
 tftp-root=/srv/tftp
+
+# 设置上级 DNS 服务器
+server=162.105.129.27
 ```
 ### 3. 为远程网卡启动提供引导加载程序
 1）访问 [http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/](http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/)
@@ -139,6 +156,13 @@ mv amd64 /srv/tftp/amd64
 128.1.7.107     c01b07n07
 ```
 
+### 5. 停止系统自带的域名服务并重启 dnsmasq
+```bash
+systemctl stop systemd-resolved.service
+systemctl disable systemd-resolved.service
+
+systemctl restart dnsmasq.service
+```
 
 
 
