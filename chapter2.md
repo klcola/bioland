@@ -87,10 +87,16 @@ dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:3a:b6:92,12.1.7.
 dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:35:8b:93,12.1.7.106
 dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:24:a8:e8:61:1c:35:8b:94,12.1.7.107
 
+dhcp-match=set:efi-x86_64,option:client-arch,9
+dhcp-match=set:efi-bc,option:client-arch,7
+dhcp-match=set:legacy,option:client-arch,0
+dhcp-match=set:efi-arm64,option:client-arch,11
 
-dhcp-boot=pxelinux.0
-dhcp-match=set:efi-x86_64,option:client-arch,7
-dhcp-boot=tag:efi-x86_64,bootx64.efi
+dhcp-boot=tag:efi-x86_64,amd64/bootx64.efi
+dhcp-boot=tag:efi-bc,amd64/bootx64.efi
+dhcp-boot=tag:legacy,amd64/pxelinux.0
+dhcp-boot=tag:efi-arm64,arm64/bootaa64.efi
+
 enable-tftp
 tftp-root=/srv/tftp
 ```
