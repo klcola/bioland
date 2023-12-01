@@ -7,7 +7,7 @@
 
 ## 操作系统分发节点安装及配置
 
-### 1. 安装操作系统
+### 1. 安装操作系统和必要的驱动
 给操作系统分发节点安装 Ubuntu 22.04 LTS server 版操作系统，具体的安装说明请参考 [Ubuntu Server 版基础安装文档](https://ubuntu.com/server/docs/installation)
 安装完成后，可以给 apt 设置国内的阿里云源或清华大学镜像源来加快软件安装速度，具体操作步骤
 
@@ -34,9 +34,17 @@ apt install net-tools libpython3-dev libfile-find-rule-perl-perl libgfortran5 li
 # 解压并编译驱动
 gzip -dc MLNX_OFED_LINUX-23.10-0.5.5.0-ubuntu22.04-x86_64.tgz | tar xf -
 cd MLNX_OFED_LINUX-23.10-0.5.5.0-ubuntu22.04-x86_64/
+./mlnxofedinstall --add-kernel-support
+
+# 安装成功后，启动 openibd 服务
+systemctl start openibd
+
+# 运行 ip a 命令，查看 ib 卡状态
+ip a
+
+# 给 ib 卡手动设置 ip (注意我们的ib卡设备名是 ibs10，这里要根据 ip a 的输出判断实际的 ib 卡设备名)
+ifconfig ibs10 12.2.6.102 netmask 255.0.0.0 up
 ```
-
-
 
 ### 2. 安装配置 dhcp 和 tfpd 服务器
 1) 首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
@@ -68,10 +76,10 @@ id:ff:00:00:00:00:00:02:00:00:02:c9:00:3a:70:ed:a3:00:27:ff:19
 
 pxe.conf 文件的内容大致如下
 ```txt
-interface=ens129f0,ib0,lo
+interface=ens129f0,ibs10,lo
 bind-interfaces
 dhcp-range=ens129f0,128.1.0.0,128.255.0.0
-dhcp-range=ib0,12.1.0.0,12.255.0.0
+dhcp-range=ibs10,12.1.0.0,12.255.0.0
 
 dhcp-host=61:51:2F:1E:1F:30,128.2.6.101
 dhcp-host=61:61:2F:1D:1B:40,128.2.6.103
