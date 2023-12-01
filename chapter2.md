@@ -89,12 +89,9 @@ dhcp-host=61:61:2F:17:F1:E8,128.2.6.106
 dhcp-host=61:61:2F:17:F4:6C,128.2.6.107
 dhcp-host=61:61:2F:12:FC:D0,128.2.6.108
 dhcp-host=61:4F:A6:1E:BF:B0,128.2.6.109
-dhcp-host=61:61:2F:17:fa:9D,128.2.24.13
-dhcp-host=70:61:2F:17:f4:C4,128.2.24.14
 dhcp-host=70:94:49:32:E5:96,128.1.7.105
 dhcp-host=70:16:3A:1E:2C:14,128.1.7.106
 dhcp-host=70:94:49:02:E7:2A,128.1.7.107
-
 
 dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:08:c0:eb:03:00:39:a4:04,12.2.6.101
 dhcp-host=id:ff:00:00:00:00:00:02:00:00:02:c9:00:08:cd:eb:03:00:78:a3:a4,12.2.6.102
@@ -172,6 +169,7 @@ systemctl disable systemd-resolved.service
 systemctl restart dnsmasq.service
 ```
 
+### 6. 安装和配置 nfs 服务器
 
 
 
