@@ -1,5 +1,7 @@
 # 安装配置计算节点操作系统镜像
 
+**请注意，本指南仅针对 Ubuntu 22.04 server 版本有效**
+
 ## 1. 使用 debootstrap 安装 ubuntu 基本系统到 /srv/bioland/jammy 目录下
 ```bash
 apt install debootstrap
@@ -31,10 +33,19 @@ export PS1="(BL)$PS1"
 ```bash
 apt update
 mount none /proc -t proc
+
+# 升级软件到当前最新稳定版本
+apt upgrade
+
+# 推荐安装的软件（非必须，但挺有用）
+apt install vim vim-syntastic
 ```
 
-## 6. (chroot内)安装 sshd 服务
-apt install openssh-server 
+## 6. (chroot内)安装 sshd、fail2ban 等服务
+```bash
+apt install openssh-server fail2ban
+
+# fail2ban 的配置请参考 第二章 的相关内容
 ```
 
 ## 7. (chroot内)编译内核，以支持通过网卡启动系统
@@ -57,4 +68,16 @@ chmod a+x debian/rules
 chmod a+x debian/scripts/*
 chmod a+x debian/scripts/misc/*
 LANG=C fakeroot debian/rules clean
-``` 
+```
+
+### 安装编译内核所需要的工具软件包
+```bash
+apt install gcc g++ dwarves libncurses5-dev flex bison libssl-dev libncurses-dev libelf-dev libpci-dev python3-dev libcap-dev bc rsync
+```
+
+### 配置内核
+主要是在默认选项的基础上增加 nfs 文件系统相关支持及机器网卡驱动支持，<font color="red">并且这些支持一定需要直接编入内核，而不是以 module 形式存在</font>。
+```bash
+cp /boot/config-5.15.0-78-generic .config
+make menuconfig
+```
