@@ -79,7 +79,7 @@ systemctl enable fail2ban
 ```
 
 ### 2. 安装配置 dhcp 和 tfpd 服务器
-1) 首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
+1）首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
 
 ```bash
 #!/bin/bash
@@ -87,7 +87,7 @@ systemctl enable fail2ban
 apt update && apt install dnsmasq
 ```
 
-2) 配置 dnsmasq
+2）配置 dnsmasq
 修改 dnsmasq 配置文件，创建 /etc/dnsmasq.conf.d/pxe.conf
 请注意根据实际情况修改 interface 及 mac 地址。并注意，IB卡的 mac 地址不能直接写```ip a``` 命令输出的 mac 地址，而是要用
 id:ff:00:00:00:00:00:02:00:00:02:c9:00: + mac地址后8位，例如如果 ip a 的输出结果的 ib 卡部分如下
