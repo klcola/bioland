@@ -229,3 +229,12 @@ mv /root/linux-5.15.0 /usr/src
 cd /lib/modules/5.15.126
 ln -s /usr/src/linux-5.15.0 source
 ```
+
+## 8. 退出 chroot 系统，将编译好的内核 copy 至 tftp 目录
+```
+cp /srv/bioland/jammy/boot/*-5.15.126 /srv/tftp/amd64/
+```
+编辑 /srv/tftp/amd64/grub/grub.cfg，内容如下
+```
+
+```
