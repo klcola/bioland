@@ -1,13 +1,6 @@
-# 系统搭建指南
+# 操作系统分发节点安装及配置
 
-## 系统设计
-在 Bioland Linux 高性能集群操作系统的环境中，有两类节点，一类为操作系统分发节点，一类为集群的运行时节点。
-
-//todo 系统架构图
-
-## 操作系统分发节点安装及配置
-
-### 1. 安装操作系统、必要的驱动和 fail2ban 服务
+## 1. 安装操作系统、必要的驱动和 fail2ban 服务
 1）给操作系统分发节点安装 Ubuntu 22.04 LTS server 版操作系统，具体的安装说明请参考 [Ubuntu Server 版基础安装文档](https://ubuntu.com/server/docs/installation)
 安装完成后，可以给 apt 设置国内的阿里云源或清华大学镜像源来加快软件安装速度，具体操作步骤
 
@@ -78,7 +71,7 @@ systemctl start fail2ban
 systemctl enable fail2ban
 ```
 
-### 2. 安装配置 dhcp 和 tfpd 服务器
+## 2. 安装配置 dhcp 和 tfpd 服务器
 1）首先安装 [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html) 。 dnsmasq 是 Linux 环境下的一款服务器程序，可以同时提供 DNS、DHCP 和 TFTP 三种服务，我们利用这个软件来提供 DHCP 和 TFTP 服务。
 
 ```bash
@@ -154,7 +147,7 @@ tftp-root=/srv/tftp
 # 设置上级 DNS 服务器
 server=162.105.129.27
 ```
-### 3. 为远程网卡启动提供引导加载程序
+## 3. 为远程网卡启动提供引导加载程序
 1）访问 [http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/](http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/)
 找到适合自己平台的 Netboot tarball 并下载，比如如果是 amd64 平台，可以下载
 [64-bit PC (AMD64) netboot tarball](http://cdimage.ubuntu.com/ubuntu-server/daily-live/current/noble-netboot-amd64.tar.gz)
@@ -174,7 +167,7 @@ bootx64.efi  grub  grubx64.efi  initrd  ldlinux.c32  linux  pxelinux.0  pxelinux
 mv amd64 /srv/tftp/amd64
 ```
 
-### 4. 修改主机 /etc/hosts 文件，加入计算节点的 ip 和主机名。dnsmasq 的 dns 服务器默认会读取 /etc/hosts 文件中的记录，这样计算节点启动后主机名就会根据 dns 的记录设置成相应的名字。
+## 4. 修改主机 /etc/hosts 文件，加入计算节点的 ip 和主机名。dnsmasq 的 dns 服务器默认会读取 /etc/hosts 文件中的记录，这样计算节点启动后主机名就会根据 dns 的记录设置成相应的名字。
 
 /etc/hosts 文件内容如下
 ```
@@ -193,7 +186,7 @@ mv amd64 /srv/tftp/amd64
 128.1.7.107     c01b07n07
 ```
 
-### 5. 停止系统自带的域名服务并重启 dnsmasq
+## 5. 停止系统自带的域名服务并重启 dnsmasq
 ```bash
 systemctl stop systemd-resolved.service
 systemctl disable systemd-resolved.service
@@ -201,7 +194,7 @@ systemctl disable systemd-resolved.service
 systemctl restart dnsmasq.service
 ```
 
-### 6. 安装和配置 nfs 服务器
+## 6. 安装和配置 nfs 服务器
 1）安装 nfs 服务器
 ```bash
 apt-get update
