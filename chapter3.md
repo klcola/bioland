@@ -23,7 +23,7 @@ mount -o bind /sys /srv/bioland/jammy/sys
 ## 4. 配置 nfs 基本系统，chroot 切换至该系统，并设置相关环境变量
 ```bash
 LANG=C.UTF-8 chroot /srv/bioland/jammy /bin/bash
-export PS1="(n)$PS1"
+export PS1="(BL)$PS1"
 ```
 
 <font color="red">注意以下步骤均在 chroot 系统内运行</font>
