@@ -167,8 +167,8 @@ bootx64.efi  grub  grubx64.efi  initrd  ldlinux.c32  linux  pxelinux.0  pxelinux
 mv amd64 /srv/tftp/amd64
 ```
 
-## 4. 修改主机 /etc/hosts 文件，加入计算节点的 ip 和主机名。dnsmasq 的 dns 服务器默认会读取 /etc/hosts 文件中的记录，这样计算节点启动后主机名就会根据 dns 的记录设置成相应的名字。
-
+## 4. 修改主机 /etc/hosts 文件
+给 /etc/hosts 文件加入计算节点的 ip 和主机名。dnsmasq 的 dns 服务器默认会读取 /etc/hosts 文件中的记录，这样计算节点启动后主机名就会根据 dns 的记录设置成相应的名字。
 /etc/hosts 文件内容如下
 ```
 127.0.0.1 localhost
@@ -207,5 +207,9 @@ apt install nfs-kernel-server
 /srv/bioland/jammy       128.0.0.0/8(rw,no_root_squash,sync,no_subtree_check)
 ```
 
+3）重启 nfs 服务
+```
+systemctl restart nfs-kernel-server
+```
 
 
