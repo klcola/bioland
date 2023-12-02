@@ -7,8 +7,8 @@
 
 ## 操作系统分发节点安装及配置
 
-### 1. 安装操作系统和必要的驱动
-给操作系统分发节点安装 Ubuntu 22.04 LTS server 版操作系统，具体的安装说明请参考 [Ubuntu Server 版基础安装文档](https://ubuntu.com/server/docs/installation)
+### 1. 安装操作系统、必要的驱动和 fail2ban 服务
+1）给操作系统分发节点安装 Ubuntu 22.04 LTS server 版操作系统，具体的安装说明请参考 [Ubuntu Server 版基础安装文档](https://ubuntu.com/server/docs/installation)
 安装完成后，可以给 apt 设置国内的阿里云源或清华大学镜像源来加快软件安装速度，具体操作步骤
 
 ```bash
@@ -24,7 +24,7 @@ sed -e 's/archive.ubuntu.com/mirrors.aliyun.com/' /etc/apt/sources.list- > /etc/
 apt update
 ```
 
-安装 Infiniband 适配卡驱动，从 [https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/](https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/) 下载最新的驱动版本。
+2）安装 Infiniband 适配卡驱动，从 [https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/](https://network.nvidia.com/products/infiniband-drivers/linux/mlnx_ofed/) 下载最新的驱动版本。
 编译 Infiniband 适配卡驱动需要先装一些必要的软件包（下面的列表仅供参考，很可能会根据版本的更新有所变化，可以编译出错时根据提示安装必要的软件包）。
 ```bash
 # 安装必须的软件包
@@ -44,6 +44,38 @@ ip a
 
 # 给 ib 卡手动设置 ip (注意我们的ib卡设备名是 ibs10，这里要根据 ip a 的输出判断实际的 ib 卡设备名)
 ifconfig ibs10 12.2.6.102 netmask 255.0.0.0 up
+```
+
+3）安装配置 fail2ban 服务
+```
+apt update
+apt install fail2ban
+```
+
+配置
+```
+cd /etc/fail2ban
+cp jail.conf jail.local
+```
+
+修改 jail.local 内容，将 bantime 设置为 10d (默认是 10m）
+```
+bantime = 10d
+```
+找到 [sshd]，将 backend 设置为 systemd
+```
+[sshd]
+port    = ssh
+logpath = %(sshd_log)s
+backend = systemd
+```
+
+启动 fail2ban 服务
+```
+systemctl start fail2ban
+
+# 将 fail2ban 加入默认启动选项
+systemctl enable fail2ban
 ```
 
 ### 2. 安装配置 dhcp 和 tfpd 服务器
@@ -170,6 +202,17 @@ systemctl restart dnsmasq.service
 ```
 
 ### 6. 安装和配置 nfs 服务器
+1）安装 nfs 服务器
+```bash
+apt-get update
+apt install nfs-kernel-server
+```
+
+2）修改 nfs 配置文件 /etc/exports，内容如下
+```
+# nfsv4
+/srv/bioland/jammy       128.0.0.0/8(rw,no_root_squash,sync,no_subtree_check)
+```
 
 
 
