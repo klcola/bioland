@@ -50,7 +50,7 @@ apt install openssh-server fail2ban
 
 ## 7. (chroot内)编译内核，以支持通过网卡启动系统
 
-### 下载 ubuntu jammy 源码文件  
+### 1）下载 ubuntu jammy 源码文件  
 有许多不同的方法可以获得内核源代码，如果你已经安装了Ubuntu的一个版本，并且你想对系统上安装的内核进行更改，请使用apt-get方法（如下所述）来获取源代码。
 参考链接：[BuildYourOwnKernel](https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel)
 ```bash
@@ -70,14 +70,130 @@ chmod a+x debian/scripts/misc/*
 LANG=C fakeroot debian/rules clean
 ```
 
-### 安装编译内核所需要的工具软件包
+### 2）安装编译内核所需要的工具软件包
 ```bash
 apt install gcc g++ dwarves libncurses5-dev flex bison libssl-dev libncurses-dev libelf-dev libpci-dev python3-dev libcap-dev bc rsync
 ```
 
-### 配置内核
+### 3）配置内核
 主要是在默认选项的基础上增加 nfs 文件系统相关支持及机器网卡驱动支持，<font color="red">并且这些支持一定需要直接编入内核，而不是以 module 形式存在</font>。
 ```bash
 cp /boot/config-5.15.0-78-generic .config
 make menuconfig
+```
+然后在相关选项内查找和 NFS root 以及 DHCP 远程启动相关的选项
+
+Networking support --> Network options --> IP: kernel level autoconfiguration 这个选项要打开，就能看到 IP: DHCP support 和 IP: BOOTP support 等，这些也都选 y
+
+File Systems --> Network File Systems 里把 NFS client 选 y，能看到 Root file system on NFS，这个一定要选中
+
+配置完内核退出后，查看一下相关选项是否选中。可以用如下命令检查：
+
+```bash
+grep CONFIG_NETWORK_FILESYSTEMS .config
+```
+需要重点检查的内容
+```
+-->NFS client
+CONFIG_NETWORK_FILESYSTEMS=y
+CONFIG_NFS_FS=y
+CONFIG_NFS_V3=y
+
+-->NFS root
+CONFIG_ROOT_NFS=y
+
+-->Kernel level network autoconfiguration
+CONFIG_IP_PNP=y
+CONFIG_IP_PNP_DHCP=y
+CONFIG_IP_PNP_BOOTP=y
+```
+
+另外需要注意，服务器网卡的驱动也必须编译在内核中，不能编译成 module 的形式。
+
+### 4）编译内核
+运行如下命令编译内核
+```bash
+# 会在上一级目录生成两个deb文件(实际上有多个，但最重要的是 image 和 headers)
+time make -j $(nproc) bindeb-pkg
+```
+
+### 5）安装内核
+```
+cd
+dpkg -i install linux-headers-5.15.99_5.15.99-1_amd64.deb
+dpkg -i install linux-image-5.15.99_5.15.99-1_amd64.deb
+```
+(可以根据实际情况在命令行中敲入正确的 .deb 文件名)
+
+### 6）生成支持 nfs netboot 的 initrd 文件
+
+首先更改 /etc/initramfs-tools/initramfs.conf 配置文件，需要修改的内容如下
+```
+#
+# initramfs.conf
+# Configuration file for mkinitramfs(8). See initramfs.conf(5).
+#
+# Note that configuration options from this file can be overridden
+# by config files in the /etc/initramfs-tools/conf.d directory.
+#
+
+#
+## BOOT: [ local | nfs ]
+##
+## local - Boot off of local media (harddrive, USB stick).
+##
+## nfs - Boot using an NFS drive as the root of the drive.
+##
+
+BOOT=nfs
+
+#
+# MODULES: [ most | netboot | dep | list ]
+#
+# most - Add most filesystem and all harddrive drivers.
+#
+# dep - Try and guess which modules to load.
+#
+# netboot - Add the base modules, network modules, but skip block devices.
+#
+# list - Only include modules from the 'additional modules' list
+#
+
+MODULES=netboot
+
+#
+# NFS Section of the config.
+#
+
+#
+# DEVICE: ...
+#
+# Specify a specific network interface, like eth0
+# Overridden by optional ip= or BOOTIF= bootarg
+#
+
+DEVICE=
+
+#
+# NFSROOT: [ auto | HOST:MOUNT ]
+#
+
+NFSROOT=auto
+```
+<font color="red">注意 /etc/initramfs-tools/conf.d/driver-policy 文件中的设置会覆盖MODULES=netboot 选项</font>
+
+创建 initrd 文件
+```bash
+# 可修改 /etc/initramfs-tools/modules 增加对驱动模块的支持
+# 比如 Intel® Ethernet Controller X710 的 iavf 模块
+mkinitramfs -k -o initrd.img-5.15.99 5.15.99
+```
+mkinitramfs 用法说明可参见 [http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html](http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html)
+
+### 7）将内核文件和刚刚生成好的 initrd 文件复制到 /srv/tftp/ 中
+```bash
+cp linux-headers-5.15.99_5.15.99-1_amd64.deb /srv/nfs4/jammy/root/
+cp linux-image-5.15.99_5.15.99-1_amd64.deb /srv/nfs4/jammy/root/
+cp initrd.img-5.15.99 /srv/tftp/
+cp vmlinuz-5.15.99 /srv/tftp/
 ```
