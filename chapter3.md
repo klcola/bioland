@@ -7,8 +7,8 @@
 apt install debootstrap
 debootstrap --arch amd64 jammy /srv/bioland/jammy
 
-# 需清空 /srv/nfs4/jammy/etc/hostname 中的主机名信息
-# 否则无盘启动的节点名称会与本地服务器相同，在 /etc/hosts 中配置的主机名不生效
+# 需清空 /srv/bioland/jammy/etc/hostname 中的主机名信息
+# 否则无盘启动的节点名称会与本地服务器相同，从而造成在 /etc/hosts 中配置的主机名不生效
 ```
 
 ## 2. 配置 nfs 基本系统的 apt 源
@@ -59,11 +59,11 @@ apt install dpkg-dev debhelper gawk
 
 # 安装通用内核，主要是待会需要用这个内核的 config 文件，在这个 config 文件的基础上来定制编译我们的内核
 apt install linux-image-generic
-
+cd /root
 apt-get source linux-image-unsigned-$(uname -r)
 
 # 进入内核文件夹
-cd linux-5.15.0
+cd /root/linux-5.15.0
 chmod a+x debian/rules
 chmod a+x debian/scripts/*
 chmod a+x debian/scripts/misc/*
@@ -114,14 +114,14 @@ CONFIG_IP_PNP_BOOTP=y
 运行如下命令编译内核
 ```bash
 # 会在上一级目录生成两个deb文件(实际上有多个，但最重要的是 image 和 headers)
-time make -j $(nproc) bindeb-pkg
+make -j $(nproc) bindeb-pkg
 ```
 
 ### 5）安装内核
 ```
-cd
-dpkg -i install linux-headers-5.15.99_5.15.99-1_amd64.deb
-dpkg -i install linux-image-5.15.99_5.15.99-1_amd64.deb
+cd /root
+dpkg -i install linux-image-5.15.126_5.15.126-1_amd64.deb
+dpkg -i install linux-image-5.15.126_5.15.126-1_amd64.deb
 ```
 (可以根据实际情况在命令行中敲入正确的 .deb 文件名)
 
@@ -190,10 +190,13 @@ mkinitramfs -k -o initrd.img-5.15.99 5.15.99
 ```
 mkinitramfs 用法说明可参见 [http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html](http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html)
 
-### 7）将内核文件和刚刚生成好的 initrd 文件复制到 /srv/tftp/ 中
+### 7）为系统设置 Linux 源文件目录
+<font color="red">请注意 /lib/modules/5.15.126 中，有两个软连接，需要指向刚刚编译内核的 source code 目录 (5.15.126可根据实际版本替换)</font>
 ```bash
-cp linux-headers-5.15.99_5.15.99-1_amd64.deb /srv/nfs4/jammy/root/
-cp linux-image-5.15.99_5.15.99-1_amd64.deb /srv/nfs4/jammy/root/
-cp initrd.img-5.15.99 /srv/tftp/
-cp vmlinuz-5.15.99 /srv/tftp/
+# 拷贝source code至chroot内
+mv /root/linux-5.15.0 /usr/src
+
+cd /lib/modules/5.15.126
+ln -s /usr/src/linux-5.15.0 source
+ln -s /usr/src/linux-5.15.0 build
 ```
