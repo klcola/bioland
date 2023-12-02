@@ -113,21 +113,20 @@ CONFIG_IP_PNP_BOOTP=y
 ### 4）编译内核
 运行如下命令编译内核
 ```bash
-# 会在上一级目录生成两个deb文件(实际上有多个，但最重要的是 image 和 headers)
+# 编译会在上一级目录生成几个个deb文件，需要安装的是 linux-headers、linux-image 和 linux-libc-dev
 make -j $(nproc) bindeb-pkg
 ```
 
 ### 5）安装内核
 ```
 cd /root
-dpkg -i install linux-image-5.15.126_5.15.126-1_amd64.deb
-dpkg -i install linux-image-5.15.126_5.15.126-1_amd64.deb
+dpkg -i linux-headers-5.15.126_5.15.126-1_arm64.deb linux-image-5.15.126_5.15.126-1_arm64.deb linux-libc-dev_5.15.126-1_arm64.deb
 ```
 (可以根据实际情况在命令行中敲入正确的 .deb 文件名)
 
 ### 6）生成支持 nfs netboot 的 initrd 文件
 
-首先更改 /etc/initramfs-tools/initramfs.conf 配置文件，需要修改的内容如下
+首先更改 /etc/initramfs-tools/initramfs.conf 配置文件，内容如下
 ```
 #
 # initramfs.conf
@@ -138,12 +137,12 @@ dpkg -i install linux-image-5.15.126_5.15.126-1_amd64.deb
 #
 
 #
-## BOOT: [ local | nfs ]
-##
-## local - Boot off of local media (harddrive, USB stick).
-##
-## nfs - Boot using an NFS drive as the root of the drive.
-##
+# BOOT: [ local | nfs ]
+#
+# local - Boot off of local media (harddrive, USB stick).
+#
+# nfs - Boot using an NFS drive as the root of the drive.
+#
 
 BOOT=nfs
 
@@ -162,8 +161,20 @@ BOOT=nfs
 MODULES=netboot
 
 #
-# NFS Section of the config.
+# BUSYBOX: [ y | n | auto ]
 #
+# Use busybox shell and utilities.  If set to n, klibc utilities will be used.
+# If set to auto (or unset), busybox will be used if installed and klibc will
+# be used otherwise.
+#
+
+BUSYBOX=auto
+
+#
+# COMPRESS: [ gzip | bzip2 | lz4 | lzma | lzop | xz | zstd ]
+#
+
+COMPRESS=zstd
 
 #
 # DEVICE: ...
@@ -179,14 +190,33 @@ DEVICE=
 #
 
 NFSROOT=auto
-```
-<font color="red">注意 /etc/initramfs-tools/conf.d/driver-policy 文件中的设置会覆盖MODULES=netboot 选项</font>
 
-创建 initrd 文件
+#
+# RUNSIZE: ...
+#
+# The size of the /run tmpfs mount point, like 256M or 10%
+# Overridden by optional initramfs.runsize= bootarg
+#
+
+RUNSIZE=10%
+
+#
+# FSTYPE: ...
+#
+# The filesystem type(s) to support, or "auto" to use the current root
+# filesystem type
+#
+
+FSTYPE=auto
+```
+<font color="red">注意，如果有 /etc/initramfs-tools/conf.d/driver-policy 文件，该文件中的设置会覆盖 MODULES=netboot 选项</font>
+
+创建 initrd 文件，注意修改 initrd.img- 后面的版本号以符合实际情况
 ```bash
 # 可修改 /etc/initramfs-tools/modules 增加对驱动模块的支持
 # 比如 Intel® Ethernet Controller X710 的 iavf 模块
-mkinitramfs -k -o initrd.img-5.15.99 5.15.99
+mkinitramfs -k -o initrd.img-5.15.126 5.15.126
+mv initrd.img-5.15.126 /boot/
 ```
 mkinitramfs 用法说明可参见 [http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html](http://manpages.ubuntu.com/manpages/bionic/man8/mkinitramfs.8.html)
 
@@ -198,5 +228,4 @@ mv /root/linux-5.15.0 /usr/src
 
 cd /lib/modules/5.15.126
 ln -s /usr/src/linux-5.15.0 source
-ln -s /usr/src/linux-5.15.0 build
 ```
