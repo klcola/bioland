@@ -39,6 +39,34 @@ ip a
 ifconfig ibs10 12.2.6.102 netmask 255.0.0.0 up
 ```
 
+### trouble shooting
+在启动 openibd 的过程中，有可能会遇到如下错误，这是由于新安装的驱动模块和老的 ib_uverbs 冲突的原因
+![start openibd failed](./trouble_shot_start_openibd.png)
+
+手动将 ib_uverbs 和依赖它的模块卸载，再启动 openibd 服务即可，首先运行命令
+```bash
+lsmod | grep ib
+```
+输出如下
+```
+libcrc32c              16384  2 btrfs,raid456
+ib_uverbs             188416  1 hns_roce_hw_v2
+ib_core               438272  2 hns_roce_hw_v2,ib_uverbs
+hibmc_drm              24576  0
+drm_vram_helper        28672  1 hibmc_drm
+drm_ttm_helper         20480  2 hibmc_drm,drm_vram_helper
+i2c_algo_bit           20480  1 hibmc_drm
+drm_kms_helper        339968  4 hibmc_drm,drm_vram_helper
+drm                   659456  6 drm_kms_helper,hibmc_drm,drm_vram_helper,drm_ttm_helper,ttm
+libsas                106496  2 hisi_sas_v3_hw,hisi_sas_main
+scsi_transport_sas     45056  4 hisi_sas_v3_hw,ses,hisi_sas_main,libsas
+```
+可以看到 hns_roce_hw_v2 模块依赖于 ib_uverbs，需要首先卸载 hns_roce_hw_v2，再卸载 ib_uverbs
+```
+rmmod hns_roce_hw_v2 && rmmod ib_uverbs
+```
+之后再重启 openibd 服务即可。
+
 3）安装配置 fail2ban 服务
 ```
 apt update
