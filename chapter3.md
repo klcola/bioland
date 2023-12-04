@@ -232,9 +232,6 @@ ln -s /usr/src/linux-5.15.0 source
 
 ## 8. 退出 chroot 系统，将编译好的内核 copy 至 tftp 目录
 ```
-cp /srv/bioland/jammy/boot/*-5.15.126 /srv/tftp/amd64/
-```
-编辑 /srv/tftp/amd64/grub/grub.cfg，内容如下
-```
-
+cp /srv/bioland/jammy/boot/vmlinuz-5.15.126 /srv/tftp/vmlinuz-5.15.126-amd64
+cp /srv/bioland/jammy/boot/initrd.img-5.15.126 /srv/tftp/initrd.img-5.15.126-amd64
 ```
