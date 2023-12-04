@@ -190,9 +190,9 @@ root@localhost:~# ls amd64/
 bootx64.efi  grub  grubx64.efi  initrd  ldlinux.c32  linux  pxelinux.0  pxelinux.cfg
 ```
 
-3）将 amd64 移至 tftp 服务目录
+3）将 amd64 下的文件移至 tftp 服务目录
 ```
-mv amd64 /srv/tftp/amd64
+mv amd64/* /srv/tftp/
 ```
 
 ## 4. 修改主机 /etc/hosts 文件
@@ -240,4 +240,16 @@ apt install nfs-kernel-server
 systemctl restart nfs-kernel-server
 ```
 
+## 7. 配置网络启动(uefi模式)的 grub
+修改 /srv/tftp/grub/grub.cfg，文件内容如下
+```
+set default="0"
+set timeout=20
+
+menuentry "Ubuntu 22.04 amd64" {
+        set gfxpayload=keep
+        linux /vmlinuz-5.15.126-amd64 root=/dev/nfs rw nfsroot=128.1.7.106:/srv/bioland/jammy,vers=3,tcp ip=dhcp net.ifnames=0 biosdevname=0 nomodeset rdblacklist=nouveau intel_iommu=off
+        initrd /initrd.img-5.15.126-amd64
+}
+```
 
