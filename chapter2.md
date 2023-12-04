@@ -241,7 +241,7 @@ systemctl restart nfs-kernel-server
 ```
 
 ## 7. 配置网络启动(uefi模式)的 grub
-修改 /srv/tftp/grub/grub.cfg，文件内容如下
+修改 /srv/tftp/grub/grub.cfg，文件内容如下(注意此处的 vmlinuz-5.15.126-amd64 和 initrd.img-5.15.126-amd64 需与第3章第8节中自定义编译内核并复制到 tftp 目录中的对应的文件名保持一致)
 ```
 set default="0"
 set timeout=20
