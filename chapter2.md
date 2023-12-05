@@ -41,7 +41,10 @@ ifconfig ibs10 12.2.6.102 netmask 255.0.0.0 up
 
 ### trouble shooting
 在启动 openibd 的过程中，有可能会遇到如下错误，这是由于新安装的驱动模块和老的 ib_uverbs 冲突的原因
+
+
 ![start openibd failed](./trouble_shot_start_openibd.png)
+
 
 手动将 ib_uverbs 和依赖它的模块卸载，再启动 openibd 服务即可，首先运行命令
 ```bash
