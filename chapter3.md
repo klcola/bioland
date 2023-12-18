@@ -235,3 +235,37 @@ ln -s /usr/src/linux-5.15.0 source
 cp /srv/bioland/jammy/boot/vmlinuz-5.15.126 /srv/tftp/vmlinuz-5.15.126-amd64
 cp /srv/bioland/jammy/boot/initrd.img-5.15.126 /srv/tftp/initrd.img-5.15.126-amd64
 ```
+
+## 9. 启动计算节点，选择 uefi 方式从网卡启动
+如果一切正常，应该可以顺利启动到我们配置好的操作系统上
+
+## 10. 登录计算节点，安装 lustre 文件系统
+编译 lustre 文件系统客户端需要安装一些必要的依赖库软件包
+```bash
+# 安装编译 lustre 客户端程序需要的软件包（可能会根据实际运行环境有所变化）
+apt update
+apt install dpatch libjson-c-dev libkeyutils-dev libmount-dev libnl-genl-3-dev libkrb5-dev libreadline-dev libsnmp-dev libssl-dev libyaml-dev linux-headers-generic module-assistant mpi-default-dev python2 python3-dev
+
+# 安装 lustre 源文件包
+dpkg -i lustre-source_2.15.3-1_all.deb
+
+# 查看 lustre 源文件安装路径
+dpkg -L lustre-source
+
+# 解压缩源文件包
+bunzip2 -c /usr/src/lustre-3bb9e28884.tar.bz2 | tar xf -
+
+# 编译和安装 lustre 客户端，注意这里的 --with-linux= 选项使用我们自己配置的 Linux 内核源代码目录
+cd ./modules/lustre
+./configure --with-linux=/usr/src/linux-5.15.0 --disable-server --with-o2ib=/usr/src/ofa_kernel/default
+make debs
+cd ./debs
+dpkg -i lustre-client-modules-5.15.0-89-generic_2.15.3-1_arm64.deb lustre-client-utils_2.15.3-1_arm64.deb lustre-iokit_2.15.3-1_arm64.deb lustre-dev_2.15.3-1_arm64.deb
+```
+
+挂载 lustre 文件系统需要配置 /etc/modprobe.d/lustre.conf 文件，内容如下
+```
+# 注意，o2ib(ib0,ib1) 需要根据 ib 卡适配器的实际情况做调整，比如系统中有 4 张 ib 卡，
+# 设备名分别为 ib0,ib1,ib2,ib3，则应写成 o2ib(ib0,ib1,ib2,ib3)
+options lnet networks="o2ib(ib0,ib1)"
+```
