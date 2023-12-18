@@ -256,3 +256,33 @@ menuentry "Ubuntu 22.04 amd64" {
 }
 ```
 
+## 8. (可选)编译 lustre 文件系统客户端
+编译 lustre 文件系统客户端需要安装一些必要的依赖库软件包
+```bash
+# 安装编译 lustre 客户端程序需要的软件包（可能会根据实际运行环境有所变化）
+apt update
+apt install dpatch libjson-c-dev libkeyutils-dev libmount-dev libnl-genl-3-dev libkrb5-dev libreadline-dev libsnmp-dev libssl-dev libyaml-dev linux-headers-generic module-assistant mpi-default-dev python2 python3-dev
+
+# 安装 lustre 源文件包
+dpkg -i lustre-source_2.15.3-1_all.deb
+
+# 查看 lustre 源文件安装路径
+dpkg -L lustre-source
+
+# 解压缩源文件包
+bunzip2 -c /usr/src/lustre-3bb9e28884.tar.bz2 | tar xf -
+
+# 编译和安装 lustre 客户端
+cd ./modules/lustre
+./configure --with-linux=/usr/src/linux-headers-$(uname -r) --disable-server --with-o2ib=/usr/src/ofa_kernel/default
+make debs
+cd ./debs
+dpkg -i lustre-client-modules-5.15.0-89-generic_2.15.3-1_arm64.deb lustre-client-utils_2.15.3-1_arm64.deb lustre-iokit_2.15.3-1_arm64.deb lustre-dev_2.15.3-1_arm64.deb
+```
+
+挂载 lustre 文件系统需要配置 /etc/modprobe.d/lustre.conf 文件，内容如下
+```
+# 注意，o2ib(ib0,ib1) 需要根据 ib 卡适配器的实际情况做调整，比如系统中有 4 张 ib 卡，设备名分别为 ib0,ib1,ib2,ib3，则应写成 o2ib(ib0,ib1,ib2,ib3)
+options lnet networks="o2ib(ib0,ib1)"
+```
+
